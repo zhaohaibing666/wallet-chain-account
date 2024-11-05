@@ -355,7 +355,7 @@ func (c *Clnt) TxCountByAddress(address common.Address) (hexutil.Uint64, error) 
 
 // TxReceiptByHash implements EthClient.
 func (c *Clnt) TxReceiptByHash(hash common.Hash) (*types.Receipt, error) {
-	ctxwt, close := context.WithTimeout(context.Background(), defaultRequestTimeout.Truncate())
+	ctxwt, close := context.WithTimeout(context.Background(), defaultRequestTimeout)
 	defer close()
 
 	var txReceipt *types.Receipt
