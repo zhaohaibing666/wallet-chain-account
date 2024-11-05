@@ -11,6 +11,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/zhaohaibing666/wallet-chain-account/chain"
+	"github.com/zhaohaibing666/wallet-chain-account/chain/ethereum"
 	"github.com/zhaohaibing666/wallet-chain-account/config"
 	"github.com/zhaohaibing666/wallet-chain-account/rpc/account"
 	"github.com/zhaohaibing666/wallet-chain-account/rpc/common"
@@ -28,11 +29,30 @@ type ChainDispatcher struct {
 	registry map[ChainType]chain.IChainAdaptor
 }
 
-func New(config *config.Config) (*ChainDispatcher, error) {
+func New(conf *config.Config) (*ChainDispatcher, error) {
 	dispatcher := ChainDispatcher{
 		registry: make(map[ChainType]chain.IChainAdaptor),
 	}
 
+	chainAdaptorFactoryMap := map[string]func(conf *config.Config) (chain.IChainAdaptor, error){
+		ethereum.ChainName: ethereum.NewChainAdaptor,
+	}
+
+	supportedChains := []string{
+		ethereum.ChainName,
+	}
+
+	for _, c := range conf.Chains {
+		if factory, ok := chainAdaptorFactoryMap[c]; ok {
+			adaptor, err := factory(conf)
+			if err != nil {
+				log.Crit("failed to setup chain", "chain", c, "error", err)
+			}
+			dispatcher.registry[c] = adaptor
+		} else {
+			log.Error("unsupported chain", "chain", c, "supportedChains", supportedChains)
+		}
+	}
 	return &dispatcher, nil
 }
 
